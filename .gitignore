@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 tmp
+.DS_Store
+README.html
+prep_rgns.html

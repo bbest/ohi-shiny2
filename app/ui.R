@@ -1,11 +1,7 @@
 dashboardPage(
   dashboardHeader(title="Ocean Health Index"),
   dashboardSidebar(
-    sidebarSearchForm(
-      'searchText', 
-      buttonId = 'searchButton',
-      label = 'Search...'),
-    
+
     selectInput(
       'sel_type', 
       label='1. Choose type:', 

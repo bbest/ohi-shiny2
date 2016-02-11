@@ -58,23 +58,23 @@ shinyServer(function(input, output) {
             distinct(fld_year) %>%
             .$fld_year)
           # TODO: fix problem with this not returning extra drop-downs for category and year
-          cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
+          #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
           #browser()
-          cat(file=stderr(), format(tagList(
-            sel_input_target_layer,
-            sel_input_target_layer_category,
-            sel_input_target_layer_category_year)))
+          #cat(file=stderr(), format(tagList(
+          #  sel_input_target_layer,
+          #  sel_input_target_layer_category,
+          #  sel_input_target_layer_category_year)))
           return(tagList(
             sel_input_target_layer,
             sel_input_target_layer_category,
             sel_input_target_layer_category_year))
         } else { # is.na(fld_year)
           # TODO: fix problem with this not returning extra drop-down for category/it'd delayed: shows up for an instant when select something different
-          cat(file=stderr(), "\n!OUTPUT layer, category\n")
+          #cat(file=stderr(), "\n!OUTPUT layer, category\n")
           #browser()
-          cat(file=stderr(), format(tagList(
-            sel_input_target_layer,
-            sel_input_target_layer_category)))
+          #cat(file=stderr(), format(tagList(
+          #  sel_input_target_layer,
+          #  sel_input_target_layer_category)))
           return(tagList(
             sel_input_target_layer,
             sel_input_target_layer_category))
@@ -142,16 +142,21 @@ shinyServer(function(input, output) {
   
   ## create output variable to display layer description
   output$var_description = renderText({ 
-    HTML(as.character(layers %>%
-                        filter(layer == input$sel_input_target_layer)  %>%
-                        select(description))) })
+    req(input$sel_input_target_layer)
+    
+    layers %>%
+      filter(layer == input$sel_input_target_layer) %>%
+      .$description %>%
+      HTML() })
   
   # create output variable to display target-dimension details
   output$var_details = renderText({ 
-    HTML(
-      as.character(dims %>%
-                        filter(dimension == input$sel_output_goal_dimension)  %>%
-                        select(description))) })
+    req(input$sel_output_goal_dimension)
+    
+    dims %>%
+      filter(dimension == input$sel_output_goal_dimension)  %>%
+      .$description %>%
+      HTML() })
   
   # map1 ----
   output$map1 <- renderLeaflet({

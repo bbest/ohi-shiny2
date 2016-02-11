@@ -1,6 +1,6 @@
 shinyServer(function(input, output) {
   
-  # ui_sel_output ----
+  ## ui_sel_output ---- 
   output$ui_sel_output <- renderUI({
     req(input$sel_output_goal)
     
@@ -11,7 +11,8 @@ shinyServer(function(input, output) {
         filter(goal == input$sel_output_goal) %>%
         distinct(dimension) %>%
         .$dimension, 
-      selected = 'score')})
+      selected = 'score')
+    })
 
   # ui_sel_input ----
   output$ui_sel_input <- renderUI({
@@ -67,7 +68,7 @@ shinyServer(function(input, output) {
             sel_input_target_layer_category,
             sel_input_target_layer_category_year))
         } else { # is.na(fld_year)
-          # TODO: fix problem with this not returning extra drop-down for category
+          # TODO: fix problem with this not returning extra drop-down for category/it'd delayed: shows up for an instant when select something different
           cat(file=stderr(), "\n!OUTPUT layer, category\n")
           #browser()
           cat(file=stderr(), format(tagList(
@@ -88,14 +89,15 @@ shinyServer(function(input, output) {
       return(sel_input_target_layer)
     }})
   
-  # get_selected ----
+  ## get_selected ----
+  ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
   get_selected = reactive({
     req(input$sel_type)
     if (input$sel_type == 'output'){
       req(input$sel_output_goal)
       req(input$sel_output_goal_dimension)
       list(
-        data = rgns@data %>%
+        data = rgns@data %>% # JA/JL: why start rgns@data instead of just scores, without the left_join
           left_join(
             scores %>%
               filter(
@@ -106,8 +108,10 @@ shinyServer(function(input, output) {
                 value  = score),
             by='rgn_id') %>%
           select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension))
-    } else { # presume input$type == 'input'
+        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension)) #legend label
+   
+       } else { # presume input$type == 'input'
+         
       req(input$sel_input_target_layer)
       d = d_lyrs %>%
         filter(layer == input$sel_input_target_layer)
@@ -129,10 +133,10 @@ shinyServer(function(input, output) {
   # map1 ----
   output$map1 <- renderLeaflet({
     
-    # get data from selection
+    # get data from selection (get_selected() is the reactive function defined above)
     selected = get_selected()
     # drop value in rgns spatial data frame if exists
-    rgns@data = rgns@data[,names(rgns@data) != 'value']
+    rgns@data = rgns@data[,names(rgns@data) != 'value'] # JA/JL not sure what this is doing; 'value' column not in rgns@data geojson
     # merge value to rgns
     rgns@data = rgns@data %>%
       left_join(
@@ -146,11 +150,10 @@ shinyServer(function(input, output) {
     
     # plot map
     leaflet(rgns) %>%
-      # TODO: deal with nowrap around dateline?
       # TODO: add click() and hover() responsiveness? 
       #   see <http://rstudio.github.io/leaflet/shiny.html>,
       #   ["Highlight" polygon on hover? #195](https://github.com/rstudio/leaflet/issues/195)
-      addProviderTiles('Stamen.TonerLite') %>%
+      addProviderTiles('Stamen.TonerLite', options=tileOptions(noWrap=TRUE)) %>%
       setView(0,0,2) %>%
       addPolygons(
         stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,

@@ -4,11 +4,11 @@ shinyServer(function(input, output) {
   ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
   get_selected = reactive({
     req(input$sel_type)
-    #browser()
+    
     if (input$sel_type == 'output'){
       req(input$sel_output_goal)
       req(input$sel_output_goal_dimension)
-      #browser()
+      
       list(
         data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
           left_join(
@@ -25,10 +25,8 @@ shinyServer(function(input, output) {
         description = dims %>%
           filter(dimension == input$sel_output_goal_dimension)  %>%
           markdownToHTML(text = .$description, fragment.only=T))
-      #(markdownToHTML(text ='This dimension is an average of the current status and likely future.', fragment.only=T))
-      
+
     } else { # presume input$type == 'input'
-      
       req(input$sel_input_target_layer)
       
       list(

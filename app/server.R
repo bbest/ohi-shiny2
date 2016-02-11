@@ -12,7 +12,6 @@ shinyServer(function(input, output) {
         distinct(dimension) %>%
         .$dimension, 
       selected = 'score')
-    # verbatimTextOutput(get_selected()$var_description) where does this go
     
     })
 
@@ -111,16 +110,9 @@ shinyServer(function(input, output) {
                 value  = score),
             by='rgn_id') %>%
           select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension), #legend label
-        var_description = 
-          layers %>%
-                  filter(layer == input$sel_input_target_layer)  %>%
-                  select(description)
+        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension)) #legend label
       
-      )
-      # var_description = renderUI({ HTML(GetVar()$description) })
-      # var_details = renderPrint({ v = GetVar(); cat(v$summary, '\n\n', v$details) })
-      # 
+     
        } else { # presume input$type == 'input'
          
       req(input$sel_input_target_layer)
@@ -138,9 +130,29 @@ shinyServer(function(input, output) {
             by='rgn_id') %>%
           select(rgn_id, value),
         label = input$sel_input_target_layer)
-    }
+      
+      # description = 
+      #   layers %>%
+      #     filter(layer == input$sel_input_target_layer)  %>%
+      #     select(description)
+      # 
+  
+       }
   })
-
+  
+  ## create output variable to display layer description
+  output$var_description = renderText({ 
+    HTML(as.character(layers %>%
+                        filter(layer == input$sel_input_target_layer)  %>%
+                        select(description))) })
+  
+  # create output variable to display target-dimension details
+  output$var_details = renderText({ 
+    HTML(
+      as.character(dims %>%
+                        filter(dimension == input$sel_output_goal_dimension)  %>%
+                        select(description))) })
+  
   # map1 ----
   output$map1 <- renderLeaflet({
     

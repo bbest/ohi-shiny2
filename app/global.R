@@ -19,6 +19,7 @@ dir_scenario = './data/ohi-global/eez2015'
 layers = read_csv(file.path(dir_scenario, 'layers.csv'))
 goals  = read_csv(file.path(dir_scenario, 'conf/goals.csv'))
 scores = read_csv(file.path(dir_scenario, 'scores.csv')) # AO,BD,CP,CS,CW,ECO,FIS,FP,HAB,ICO,Index,LE,LIV,LSP,MAR,NP,SP,SPP,TR
+dims   = read_csv(file.path(dir_scenario, 'conf/dimensions.csv'))
 
 # read spatial, custom simplified using rmapshaper
 # TODO: set the path spatial for rgn_id in config.R, which should be converted to YAML with spatials registered

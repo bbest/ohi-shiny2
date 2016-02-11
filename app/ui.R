@@ -19,7 +19,8 @@ dashboardPage(
         label    = '2. Choose goal:', 
         choices  = output_goals, 
         selected = 'Index'),
-      uiOutput('ui_sel_output')),
+      uiOutput('ui_sel_output'),
+      htmlOutput('var_details')),
   
       conditionalPanel(
       condition = "input.sel_type == 'input'",
@@ -27,7 +28,8 @@ dashboardPage(
         'sel_input_target',
         label    = '2. Choose target:', 
         choices  = with(layer_targets, setNames(target, target_label))),
-      uiOutput('ui_sel_input'))   
+      uiOutput('ui_sel_input'),   
+      htmlOutput('var_description')) 
     ))),
   
   dashboardBody(

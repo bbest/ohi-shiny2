@@ -2,6 +2,4 @@
 
 ## Explore the inputs and outputs of data used to generate the global OHI scores.
 
-### Output scores
-
-### Input layers
+To be filled in with descriptive text.

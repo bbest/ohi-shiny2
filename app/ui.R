@@ -42,7 +42,7 @@ dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName='intro',
-              includeMarkdown("introduction.md")
+              includeMarkdown("data/introduction.md")
       ),
       tabItem(tabName='explore',
               h2("Explore Data"),

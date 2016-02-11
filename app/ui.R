@@ -34,9 +34,7 @@ dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName='intro',
-              h2("Introduction to the Ocean Health Index"),
-              "Lorem ipsum"
-              #add render intro markdown
+              includeMarkdown("introduction.md")
       ),
       tabItem(tabName='explore',
               h2("Explore Data"),

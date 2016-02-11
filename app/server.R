@@ -12,6 +12,8 @@ shinyServer(function(input, output) {
         distinct(dimension) %>%
         .$dimension, 
       selected = 'score')
+    # verbatimTextOutput(get_selected()$var_description) where does this go
+    
     })
 
   # ui_sel_input ----
@@ -89,6 +91,7 @@ shinyServer(function(input, output) {
       return(sel_input_target_layer)
     }})
   
+  
   ## get_selected ----
   ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
   get_selected = reactive({
@@ -97,7 +100,7 @@ shinyServer(function(input, output) {
       req(input$sel_output_goal)
       req(input$sel_output_goal_dimension)
       list(
-        data = rgns@data %>% # JA/JL: why start rgns@data instead of just scores, without the left_join
+        data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
           left_join(
             scores %>%
               filter(
@@ -108,8 +111,16 @@ shinyServer(function(input, output) {
                 value  = score),
             by='rgn_id') %>%
           select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension)) #legend label
-   
+        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension), #legend label
+        var_description = 
+          layers %>%
+                  filter(layer == input$sel_input_target_layer)  %>%
+                  select(description)
+      
+      )
+      # var_description = renderUI({ HTML(GetVar()$description) })
+      # var_details = renderPrint({ v = GetVar(); cat(v$summary, '\n\n', v$details) })
+      # 
        } else { # presume input$type == 'input'
          
       req(input$sel_input_target_layer)

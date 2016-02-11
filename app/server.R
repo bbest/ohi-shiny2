@@ -80,13 +80,13 @@ shinyServer(function(input, output) {
             sel_input_target_layer_category))
         }
       } else { # is.na(fld_category)
-        cat(file=stderr(), "\nOUTPUT layer (1)\n")
-        cat(file=stderr(), format(sel_input_target_layer))
+        #cat(file=stderr(), "\nOUTPUT layer (1)\n")
+        #cat(file=stderr(), format(sel_input_target_layer))
         return(sel_input_target_layer)
       }
     } else { # is.null(input$sel_input_target_layer)
-      cat(file=stderr(), "\nOUTPUT layer (2)\n")
-      cat(file=stderr(), format(sel_input_target_layer))
+      #cat(file=stderr(), "\nOUTPUT layer (2)\n")
+      #cat(file=stderr(), format(sel_input_target_layer))
       return(sel_input_target_layer)
     }})
   
@@ -95,9 +95,11 @@ shinyServer(function(input, output) {
   ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
   get_selected = reactive({
     req(input$sel_type)
+    #browser()
     if (input$sel_type == 'output'){
       req(input$sel_output_goal)
       req(input$sel_output_goal_dimension)
+      #browser()
       list(
         data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
           left_join(
@@ -110,53 +112,39 @@ shinyServer(function(input, output) {
                 value  = score),
             by='rgn_id') %>%
           select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension)) #legend label
+        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension),
+        description = dims %>%
+          filter(dimension == input$sel_output_goal_dimension)  %>%
+          markdownToHTML(text = .$description, fragment.only=T))
+      #(markdownToHTML(text ='This dimension is an average of the current status and likely future.', fragment.only=T))
       
-     
-       } else { # presume input$type == 'input'
+    } else { # presume input$type == 'input'
          
       req(input$sel_input_target_layer)
-      d = d_lyrs %>%
-        filter(layer == input$sel_input_target_layer)
-      # TODO: add filter for input$sel_input_target_layer_category
-      # TODO: add filter for input$sel_input_target_layer_category_year
+      
       list(
         data = rgns@data %>%
           left_join(
-            d %>%
-            select(
-              rgn_id = fld_id_num, 
-              value  = fld_val_num),
+            d_lyrs %>%
+              filter(layer == input$sel_input_target_layer) %>%
+              # TODO: add filter for input$sel_input_target_layer_category
+              # TODO: add filter for input$sel_input_target_layer_category_year
+              select(
+                rgn_id = fld_id_num, 
+                value  = fld_val_num),
             by='rgn_id') %>%
           select(rgn_id, value),
-        label = input$sel_input_target_layer)
+        label = input$sel_input_target_layer,
+        description = layers %>%
+          filter(layer == input$sel_input_target_layer) %>%
+          markdownToHTML(text = .$description, fragment.only=T))
       
-      # description = 
-      #   layers %>%
-      #     filter(layer == input$sel_input_target_layer)  %>%
-      #     select(description)
-      # 
-  
-       }
+    }
   })
   
-  ## create output variable to display layer description
+  # update description of input layer or output goal dimension
   output$var_description = renderText({ 
-    req(input$sel_input_target_layer)
-    
-    layers %>%
-      filter(layer == input$sel_input_target_layer) %>%
-      .$description %>%
-      HTML() })
-  
-  # create output variable to display target-dimension details
-  output$var_details = renderText({ 
-    req(input$sel_output_goal_dimension)
-    
-    dims %>%
-      filter(dimension == input$sel_output_goal_dimension)  %>%
-      .$description %>%
-      HTML() })
+    get_selected()$description })
   
   # map1 ----
   output$map1 <- renderLeaflet({

@@ -29,15 +29,15 @@ dashboardPage(
             selected = 'Index'),
           uiOutput('ui_sel_output')),
       
-          conditionalPanel(
+        conditionalPanel(
           condition = "input.sel_type == 'input'",
           selectInput(
             'sel_input_target',
             label    = '2. Choose target:', 
             choices  = with(layer_targets, setNames(target, target_label))),
-          uiOutput('ui_sel_input')),   
-          #htmlOutput('var_description')),
-          htmlOutput('var_description', class='shiny-input-container') ))),
+          uiOutput('ui_sel_input')),
+        
+        htmlOutput('var_description', class='shiny-input-container') ))),
   
   dashboardBody(
     tabItems(

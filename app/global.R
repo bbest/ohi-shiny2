@@ -1,7 +1,6 @@
 suppressPackageStartupMessages({
   library(rgdal)
   library(leaflet)
-  library(magrittr)
   library(dplyr)
   library(readr)
   library(tidyr)

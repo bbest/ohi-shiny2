@@ -1,6 +1,57 @@
 shinyServer(function(input, output) {
   
-  ## ui_sel_output ---- 
+  ## get_selected() ----
+  ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
+  get_selected = reactive({
+    req(input$sel_type)
+    #browser()
+    if (input$sel_type == 'output'){
+      req(input$sel_output_goal)
+      req(input$sel_output_goal_dimension)
+      #browser()
+      list(
+        data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
+          left_join(
+            scores %>%
+              filter(
+                goal      == input$sel_output_goal,
+                dimension == input$sel_output_goal_dimension) %>%
+              select(
+                rgn_id = region_id, 
+                value  = score),
+            by='rgn_id') %>%
+          select(rgn_id, value),
+        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension),
+        description = dims %>%
+          filter(dimension == input$sel_output_goal_dimension)  %>%
+          markdownToHTML(text = .$description, fragment.only=T))
+      #(markdownToHTML(text ='This dimension is an average of the current status and likely future.', fragment.only=T))
+      
+    } else { # presume input$type == 'input'
+      
+      req(input$sel_input_target_layer)
+      
+      list(
+        data = rgns@data %>%
+          left_join(
+            d_lyrs %>%
+              filter(layer == input$sel_input_target_layer) %>%
+              # TODO: add filter for input$sel_input_target_layer_category
+              # TODO: add filter for input$sel_input_target_layer_category_year
+              select(
+                rgn_id = fld_id_num, 
+                value  = fld_val_num),
+            by='rgn_id') %>%
+          select(rgn_id, value),
+        label = input$sel_input_target_layer,
+        description = layers %>%
+          filter(layer == input$sel_input_target_layer) %>%
+          markdownToHTML(text = .$description, fragment.only=T))
+      
+    }
+  })
+  
+  ## output$ui_sel_output ---- 
   output$ui_sel_output <- renderUI({
     req(input$sel_output_goal)
     
@@ -15,7 +66,7 @@ shinyServer(function(input, output) {
     
     })
 
-  # ui_sel_input ----
+  # output$ui_sel_input ----
   output$ui_sel_input <- renderUI({
     req(input$sel_input_target)
     
@@ -90,63 +141,12 @@ shinyServer(function(input, output) {
       return(sel_input_target_layer)
     }})
   
-  
-  ## get_selected ----
-  ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
-  get_selected = reactive({
-    req(input$sel_type)
-    #browser()
-    if (input$sel_type == 'output'){
-      req(input$sel_output_goal)
-      req(input$sel_output_goal_dimension)
-      #browser()
-      list(
-        data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
-          left_join(
-            scores %>%
-              filter(
-                goal      == input$sel_output_goal,
-                dimension == input$sel_output_goal_dimension) %>%
-              select(
-                rgn_id = region_id, 
-                value  = score),
-            by='rgn_id') %>%
-          select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension),
-        description = dims %>%
-          filter(dimension == input$sel_output_goal_dimension)  %>%
-          markdownToHTML(text = .$description, fragment.only=T))
-      #(markdownToHTML(text ='This dimension is an average of the current status and likely future.', fragment.only=T))
-      
-    } else { # presume input$type == 'input'
-         
-      req(input$sel_input_target_layer)
-      
-      list(
-        data = rgns@data %>%
-          left_join(
-            d_lyrs %>%
-              filter(layer == input$sel_input_target_layer) %>%
-              # TODO: add filter for input$sel_input_target_layer_category
-              # TODO: add filter for input$sel_input_target_layer_category_year
-              select(
-                rgn_id = fld_id_num, 
-                value  = fld_val_num),
-            by='rgn_id') %>%
-          select(rgn_id, value),
-        label = input$sel_input_target_layer,
-        description = layers %>%
-          filter(layer == input$sel_input_target_layer) %>%
-          markdownToHTML(text = .$description, fragment.only=T))
-      
-    }
-  })
-  
+  # output$var_description ----
   # update description of input layer or output goal dimension
   output$var_description = renderText({ 
     get_selected()$description })
   
-  # map1 ----
+  # output$map1 ----
   output$map1 <- renderLeaflet({
     
     # get data from selection (get_selected() is the reactive function defined above)

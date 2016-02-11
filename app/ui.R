@@ -1,7 +1,10 @@
 dashboardPage(
   dashboardHeader(title="Ocean Health Index"),
   dashboardSidebar(
-
+    sidebarMenu(id = 'sidebarmenu',
+                menuItem("Introduction",tabName = 'intro',icon=icon("info-circle",lib='font-awesome')),
+                menuItem("Explore Data", tabName='explore',icon=icon("globe",lib='font-awesome')),
+                conditionalPanel("input.sidebarmenu === 'explore'",
     
     selectInput(
       'sel_type', 
@@ -24,10 +27,22 @@ dashboardPage(
         'sel_input_target',
         label    = '2. Choose target:', 
         choices  = with(layer_targets, setNames(target, target_label))),
-      uiOutput('ui_sel_input'))),
+      uiOutput('ui_sel_input'))   
+    ))),
   
   dashboardBody(
-    fluidRow(
-      box(collapsible = TRUE, width=12, 
-        leafletOutput('map1'))))
+    tabItems(
+      tabItem(tabName='intro',
+              includeMarkdown("introduction.md")
+      ),
+      tabItem(tabName='explore',
+              h2("Explore Data"),
+              
+        fluidRow(
+          box(collapsible = TRUE, width=12, 
+            leafletOutput('map1'))
+          )
+        )
+      )
+  )
 )

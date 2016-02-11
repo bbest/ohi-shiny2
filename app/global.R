@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(shiny)
   library(shinydashboard)
+  library(markdown)
 })
   
 #options(shiny.reactlog=TRUE)

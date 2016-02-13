@@ -90,18 +90,6 @@ shinyServer(function(input, output) {
             distinct(fld_category) %>%
             .$fld_category))
         
-        # debug: trying out layers with category and year fields
-        # layers %>% filter(!is.na(fld_category) & !is.na(fld_year)) %>% select(targets, layer, name, fld_id_num, fld_category, fld_year, fld_val_num)
-        # MAR | mar_harvest_tonnes         | species_code
-        # NP  | np_harvest_tonnes          | product
-        # NP  | np_harvest_tonnes_relative | product
-        # layers %>% filter(!is.na(fld_category) & is.na(fld_year))
-        # cs_habitat_extent
-        
-        #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
-        #browser()
-        #cat(file=stderr(), format(ui))
-        
         fld_year = filter(layers, layer==input$sel_input_target_layer) %>% .$fld_year
         if (!is.na(fld_year) & !is.null(input$sel_input_target_layer_category)){
           ui = tagList(ui, selectInput(
@@ -113,12 +101,16 @@ shinyServer(function(input, output) {
               fld_category == input$sel_input_target_layer_category) %>%
             distinct(fld_year) %>%
             .$fld_year))  }}}
-          # TODO: fix problem with this not returning extra drop-downs for category and year
-          #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
-          #browser()
-          #cat(file=stderr(), format(ui))
-   #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
-   cat(file=stderr(), format(ui))
+          
+   # TODO: fix problem with this not returning extra drop-downs for category and year
+   # layers %>% filter(!is.na(fld_category) & !is.na(fld_year)) %>% select(targets, layer, name, fld_id_num, fld_category, fld_year, fld_val_num)
+   # MAR | mar_harvest_tonnes         | species_code
+   # NP  | np_harvest_tonnes          | product
+   # NP  | np_harvest_tonnes_relative | product
+   # layers %>% filter(!is.na(fld_category) & is.na(fld_year))
+   # cs_habitat_extent
+   #cat(file=stderr(), format(ui))
+   #cat(file=stderr(), '\n----\n')
    #browser()
    return(ui) })
   
@@ -140,10 +132,34 @@ shinyServer(function(input, output) {
         selected$data,
         by='rgn_id')
     
+    #browser()
+    # topojson <- readLines('data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.topojson.json', warn = FALSE) %>%
+    #   fromJSON(simplifyVector=F)
+    #     
+    # geojson = readLines('data/countries.geojson', warn=F) %>%
+    #   paste(collapse='\n') %>% fromJSON(simplifyVector=F)
+    
     # set color palette
     pal = colorNumeric(
       palette = 'RdYlBu',
       domain = rgns$value)
+      #domain = selected$data$value)
+    
+    # # Default styles for all features
+    # topojson$style = list(
+    #   weight = 1,
+    #   color = "#555555",
+    #   opacity = 1,
+    #   fillOpacity = 0.7)
+    # 
+    # # Add a properties$style list to each feature
+    # topojson$features = lapply(topojson$features, function(feat) {
+    #   feat$properties$style = list(
+    #     fillColor = pal(selected$data$value))
+    #   feat })
+    
+    # Add the now-styled GeoJSON object to the map
+    #leaflet() %>% addGeoJSON(geojson)
     
     # plot map
     leaflet(rgns) %>%
@@ -152,6 +168,7 @@ shinyServer(function(input, output) {
       #   ["Highlight" polygon on hover? #195](https://github.com/rstudio/leaflet/issues/195)
       addProviderTiles('Stamen.TonerLite', options=tileOptions(noWrap=TRUE)) %>%
       setView(0,0,2) %>%
+      addTopoJSON(topojson, weight = 1, color = "#444444", fill = FALSE) %>%
       addPolygons(
         stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,
         color = ~pal(value)) %>%
@@ -159,6 +176,74 @@ shinyServer(function(input, output) {
       addLegend(
         "bottomright", pal = pal, opacity = 0.5,
         values = rgns$value, title = selected$label)
+  })
+  
+  # aster hover ----
+  
+  # input$map_shape_mouseover gets updated a lot, even if the id doesn't change.
+  # We don't want to update the polygons and stateInfo except when the id
+  # changes, so use values$highlight to insulate the downstream reactives (as 
+  # writing to values$highlight doesn't trigger reactivity unless the new value 
+  # is different than the previous value).
+  values <- reactiveValues(highlight = c())
+  observe({
+    values$highlight <- input$map1_shape_mouseover$id
+  })
+  
+  # add shape on hover
+  observeEvent(input$map1_topojson_mouseover,{
+    
+    # indicate to console that an event was triggered
+    cat("\ntopojson_mouseover event")
+    
+    # clean previously highlighted shape
+    leafletProxy("map1") %>% clearGroup("highlight")
+    
+    # get id from mouse event
+    id <- input$map1_topojson_mouseover$properties$rgn_id
+    
+    # match with dataset
+    m  <- match(id,rgns$rgn_id)
+    
+    # add shape
+    leafletProxy("map1") %>% addPolygons( group = "highlight", data = rgns[m,], stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5)
+  })
+  
+  # aster plot
+  output$aster = renderAster({
+
+    if (is.null(input$map1_topojson_mouseover$properties$rgn_id)){
+      # default to global
+      rgn_id = 0
+    } else {
+      # get hover region id
+      rgn_id = input$map1_topojson_mouseover$properties$rgn_id
+    }
+    
+    #browser()
+    aster(
+      data = scores %>% 
+        filter(
+          region_id == rgn_id, 
+          dimension == 'score') %>%
+        left_join(goals, by='goal') %>%
+        filter(is.na(parent), !is.na(order_color)) %>%
+        arrange(order_color) %>%
+        select(id=goal, order=order_color, score, weight, color, label=goal), 
+      background_color = "transparent",
+      font_color = "black", stroke = "blue", font_size_center = "12px", font_size = "8px")
+  })
+  
+  id = reactive({
+    id <- input$map1_topojson_mouseover$properties$rgn_id
+    m  <- match(id, rgns$rgn_id)
+    return(m)
+  })
+  
+  output$hoverText <- renderText({
+    req(id())
+    id <- id()
+    paste("name:",rgns[id,]@data$"rgn_name", ", area_km2:",round(rgns[id,]@data$"area_km2",2))
   })
   
 })

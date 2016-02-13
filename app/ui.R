@@ -31,6 +31,7 @@ dashboardPage(
       
         conditionalPanel(
           condition = "input.sel_type == 'input'",
+          
           selectInput(
             'sel_input_target',
             label    = '2. Choose target:', 
@@ -41,12 +42,15 @@ dashboardPage(
   
   dashboardBody(
     tabItems(
-      tabItem(tabName='intro',
-              includeMarkdown("data/introduction.md")
-      ),
-      tabItem(tabName='explore',
-              h2("Explore Data"),
-              
+      
+      tabItem(
+        tabName='intro',
+        includeMarkdown("data/introduction.md")),
+      
+      tabItem(
+        tabName='explore',
+        h2("Explore Data"),
+
         fluidRow(box(
           collapsible = TRUE, width=12,
             leafletOutput('map1')))) )))

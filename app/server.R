@@ -5,49 +5,50 @@ shinyServer(function(input, output) {
   get_selected = reactive({
     req(input$sel_type)
     
-    if (input$sel_type == 'output'){
-      req(input$sel_output_goal)
-      req(input$sel_output_goal_dimension)
+    switch(input$sel_type,
+           
+      # case: output     
+      output = {
+        req(input$sel_output_goal)
+        req(input$sel_output_goal_dimension)
+        
+        list(
+          data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
+            left_join(
+              scores %>%
+                filter(
+                  goal      == input$sel_output_goal,
+                  dimension == input$sel_output_goal_dimension) %>%
+                select(
+                  rgn_id = region_id, 
+                  value  = score),
+              by='rgn_id') %>%
+            select(rgn_id, value),
+          label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension),
+          description = dims %>%
+            filter(dimension == input$sel_output_goal_dimension)  %>%
+            markdownToHTML(text = .$description, fragment.only=T)) },
       
-      list(
-        data = rgns@data %>% # JA/JL: why start w/ rgns@data instead of just scores, without the left_join
-          left_join(
-            scores %>%
-              filter(
-                goal      == input$sel_output_goal,
-                dimension == input$sel_output_goal_dimension) %>%
-              select(
-                rgn_id = region_id, 
-                value  = score),
-            by='rgn_id') %>%
-          select(rgn_id, value),
-        label = sprintf('%s - %s', input$sel_output_goal, input$sel_output_goal_dimension),
-        description = dims %>%
-          filter(dimension == input$sel_output_goal_dimension)  %>%
-          markdownToHTML(text = .$description, fragment.only=T))
-
-    } else { # presume input$type == 'input'
-      req(input$sel_input_target_layer)
+      # case: input     
+      input = {
+        req(input$sel_input_target_layer)
       
-      list(
-        data = rgns@data %>%
-          left_join(
-            d_lyrs %>%
-              filter(layer == input$sel_input_target_layer) %>%
-              # TODO: add filter for input$sel_input_target_layer_category
-              # TODO: add filter for input$sel_input_target_layer_category_year
-              select(
-                rgn_id = fld_id_num, 
-                value  = fld_val_num),
-            by='rgn_id') %>%
-          select(rgn_id, value),
-        label = input$sel_input_target_layer,
-        description = layers %>%
-          filter(layer == input$sel_input_target_layer) %>%
-          markdownToHTML(text = .$description, fragment.only=T))
-      
-    }
-  })
+        list(
+          data = rgns@data %>%
+            left_join(
+              d_lyrs %>%
+                filter(layer == input$sel_input_target_layer) %>%
+                # TODO: add filter for input$sel_input_target_layer_category
+                # TODO: add filter for input$sel_input_target_layer_category_year
+                select(
+                  rgn_id = fld_id_num, 
+                  value  = fld_val_num),
+              by='rgn_id') %>%
+            select(rgn_id, value),
+          label = input$sel_input_target_layer,
+          description = layers %>%
+            filter(layer == input$sel_input_target_layer) %>%
+            markdownToHTML(text = .$description, fragment.only=T)) })})
   
   ## output$ui_sel_output ---- 
   output$ui_sel_output <- renderUI({
@@ -68,36 +69,42 @@ shinyServer(function(input, output) {
   output$ui_sel_input <- renderUI({
     req(input$sel_input_target)
     
-   sel_input_target_layer = selectInput(
+   ui = tagList(selectInput(
       'sel_input_target_layer',
       label    = '3. Choose layer:',
       choices  = with(
         layers_by_target %>%
           filter(target == input$sel_input_target) %>%
           mutate(label = sprintf('%s: %s', layer, name)),
-        setNames(layer, label)))
+        setNames(layer, label))))
     
     if (!is.null(input$sel_input_target_layer)){
       
       fld_category = filter(layers, layer==input$sel_input_target_layer) %>% .$fld_category
       if (!is.na(fld_category)){
-        sel_input_target_layer_category = selectInput(
+        ui = tagList(ui, selectInput(
           'sel_input_target_layer_category',
           label    = sprintf('4. Choose %s:', fld_category),
           choices  = d_lyrs %>%
             filter(layer == input$sel_input_target_layer) %>%
             distinct(fld_category) %>%
-            .$fld_category)
+            .$fld_category))
         
         # debug: trying out layers with category and year fields
         # layers %>% filter(!is.na(fld_category) & !is.na(fld_year)) %>% select(targets, layer, name, fld_id_num, fld_category, fld_year, fld_val_num)
         # MAR | mar_harvest_tonnes         | species_code
         # NP  | np_harvest_tonnes          | product
         # NP  | np_harvest_tonnes_relative | product
+        # layers %>% filter(!is.na(fld_category) & is.na(fld_year))
+        # cs_habitat_extent
+        
+        #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
+        #browser()
+        #cat(file=stderr(), format(ui))
         
         fld_year = filter(layers, layer==input$sel_input_target_layer) %>% .$fld_year
         if (!is.na(fld_year) & !is.null(input$sel_input_target_layer_category)){
-          sel_input_target_layer_category_year = selectInput(
+          ui = tagList(ui, selectInput(
           'sel_input_target_layer_category_year',
           label    = '5. Choose year:',
           choices  = d_lyrs %>%
@@ -105,39 +112,15 @@ shinyServer(function(input, output) {
               layer        == input$sel_input_target_layer,
               fld_category == input$sel_input_target_layer_category) %>%
             distinct(fld_year) %>%
-            .$fld_year)
+            .$fld_year))  }}}
           # TODO: fix problem with this not returning extra drop-downs for category and year
           #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
           #browser()
-          #cat(file=stderr(), format(tagList(
-          #  sel_input_target_layer,
-          #  sel_input_target_layer_category,
-          #  sel_input_target_layer_category_year)))
-          return(tagList(
-            sel_input_target_layer,
-            sel_input_target_layer_category,
-            sel_input_target_layer_category_year))
-        } else { # is.na(fld_year)
-          # TODO: fix problem with this not returning extra drop-down for category/it'd delayed: shows up for an instant when select something different
-          #cat(file=stderr(), "\n!OUTPUT layer, category\n")
-          #browser()
-          #cat(file=stderr(), format(tagList(
-          #  sel_input_target_layer,
-          #  sel_input_target_layer_category)))
-          return(tagList(
-            sel_input_target_layer,
-            sel_input_target_layer_category))
-        }
-      } else { # is.na(fld_category)
-        #cat(file=stderr(), "\nOUTPUT layer (1)\n")
-        #cat(file=stderr(), format(sel_input_target_layer))
-        return(sel_input_target_layer)
-      }
-    } else { # is.null(input$sel_input_target_layer)
-      #cat(file=stderr(), "\nOUTPUT layer (2)\n")
-      #cat(file=stderr(), format(sel_input_target_layer))
-      return(sel_input_target_layer)
-    }})
+          #cat(file=stderr(), format(ui))
+   #cat(file=stderr(), "\n!OUTPUT layer, category, year\n")
+   cat(file=stderr(), format(ui))
+   #browser()
+   return(ui) })
   
   # output$var_description ----
   # update description of input layer or output goal dimension

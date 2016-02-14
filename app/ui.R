@@ -9,7 +9,7 @@ dashboardPage(
       
       menuItem("Introduction",tabName = 'intro',icon=icon("info-circle",lib='font-awesome')),
       
-      menuItem("Explore Data", tabName='explore',icon=icon("globe",lib='font-awesome')),
+      menuItem("Explore Data", tabName='explore',icon=icon("globe",lib='font-awesome'), selected=T),
       
       conditionalPanel(
         "input.sidebarmenu === 'explore'",
@@ -68,7 +68,13 @@ dashboardPage(
                 bottom=10, left=10, style='background-color:white',
                 textOutput('hoverText')),
               
-              # aster chart
+              # region info, possibly with aster chart
               absolutePanel(
-                top=10, right=100,
-                asterOutput(outputId = "aster", width='150px', height='150px')) )))))))
+                top=10, right=10, width='200px', height='200px', style='background-color:white', # class='floater', 
+                h4('Region Info'),
+                htmlOutput('rgnInfo'),
+                conditionalPanel(
+                  "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
+                  asterOutput(outputId = "aster", width = '100px', height = '100px'))
+                  
+                ) )))))))

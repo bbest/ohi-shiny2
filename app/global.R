@@ -34,7 +34,12 @@ if (!file.exists(rdata)){
   # TODO: set the path spatial for rgn_id in config.R, which should be converted to YAML with spatials registered
   # skipping other spatial fields: 'saup_id','fao_id' # note: 'cntry_key' for www2013, 'country_id' for nature2012
   rgns = readOGR('./data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.geojson', 'OGRGeoJSON', verbose = F)
-  topoData = readLines('data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.topojson.json')
+  #topoData = readLines('data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.topojson.json')
+  
+  topojson <- readLines('data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.topojson.json', warn = FALSE) %>%
+    #paste(collapse = "\n") %>%
+    jsonlite::fromJSON(simplifyVector=F)
+  
   goals_colors = colorRampPalette(RColorBrewer::brewer.pal(10, 'Spectral'), space='Lab')(nrow(goals))
   goals = goals %>%
     arrange(order_color) %>%
@@ -108,6 +113,7 @@ if (!file.exists(rdata)){
     mutate(target_label = sprintf('%g %s (%s)', order_hierarchy, name, target))
   
   # paste data together for later selecting appropriate category and year values
+  if (exists('d_lyrs')) rm(d_lyrs)
   for (i in 1:nrow(layers)){ # i=74
     # layers[i,] %>% select(-description, -fld_id_chr, -fld_val_chr)
     
@@ -155,7 +161,3 @@ if (!file.exists(rdata)){
 } else {
   load(rdata)
 }
-
-topojson <- readLines('data/rgn_offshore_gcs_mapshaper-simplify_x2_eez-only.topojson.json', warn = FALSE) # %>%
-  #paste(collapse = "\n") %>%
-  #jsonlite::fromJSON(simplifyVector=F)

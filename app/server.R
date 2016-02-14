@@ -261,7 +261,9 @@ shinyServer(function(input, output) {
           mutate(label=NA) %>%
           select(id=goal, order=order_color, score, weight, color, label), 
         background_color = "transparent",
-        font_color = "black", stroke = "blue", font_size_center = "12px", font_size = "8px")
+        font_color = "black", stroke = "blue", font_size_center = "12px", font_size = "8px",
+        #width='100px', height='100px', 
+        margin_top=5, margin_right=5, margin_bottom=5, margin_left=5)
     }
   })
   

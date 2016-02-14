@@ -56,10 +56,11 @@ dashboardPage(
 
         fluidRow(
           box(
-            collapsible=T, width=12, 
+            #title    = 'Map', status='primary', collapsible=T, 
+            width=12, 
             div(
-              position='relative',
-              
+              position = 'relative',
+
               # leaflet map
               leafletOutput('map1', height = 550),
               
@@ -70,11 +71,12 @@ dashboardPage(
               
               # region info, possibly with aster chart
               absolutePanel(
-                top=10, right=10, width='200px', height='200px', style='background-color:white', # class='floater', 
-                h4('Region Info'),
-                htmlOutput('rgnInfo'),
-                conditionalPanel(
-                  "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
-                  asterOutput(outputId = "aster", width = '100px', height = '100px'))
+                top=10, right=10, # class='floater', # draggable=T, # style='background-color:white', # class='floater', # width='200px', height='200px', 
+                div(class='well', style='margin-right: 10px; margin-top: 10px; text-align: right; overflow: hidden;',
+                  htmlOutput('rgnInfo'),
+                  conditionalPanel(
+                    condition = "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
+                    style     = 'float:right; display:block;',
+                    asterOutput(outputId = "aster", width='100px', height='100px')))) # , width = '100px', height = '100px'
                   
-                ) )))))))
+                ) ))))))

@@ -190,6 +190,9 @@ shinyServer(function(input, output) {
         #values = data$value, title = 'Test')
   })
   
+  # [error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242)
+  outputOptions(output, "map1", suspendWhenHidden=FALSE)
+  
   # aster hover ----
   
   # input$map_shape_mouseover gets updated a lot, even if the id doesn't change.

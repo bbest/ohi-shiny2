@@ -188,14 +188,8 @@ shinyServer(function(input, output) {
       setView(0,0,2) %>%
       addPolygons(
         data = rgns, group = 'regions', layerId = rgns@data$rgn_id,
-        #stroke = 'gray', fillOpacity = 0.5, smoothFactor = 0.5,
         stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
-        #color = ~pal(selected$data$value)) %>%
         color = ~id2col(rgn_id)) %>%
-      # addPolygons(
-      #   group = "highlight", 
-      #   data = rgns[match(16, rgns$rgn_id),], 
-      #   stroke = T, color = "gray", weight = 5, fillColor = "transparent")
       # TODO: why does legend disappear when choosing type: Input Layer?
       addLegend(
         "bottomright", pal = pal, opacity = 0.5,
@@ -256,7 +250,7 @@ shinyServer(function(input, output) {
   # aster plot
   output$aster = renderAster({
 
-    req(input$sel_type, input$sel_output_goal, input$sel_output_goal_dimension, v$hi_id)
+    req(input$sel_type, input$sel_output_goal, input$sel_output_goal_dimension)
     
     # if default input Index score, show aster
     if (input$sel_type=='output' & input$sel_output_goal=='Index' & input$sel_output_goal_dimension=='score'){

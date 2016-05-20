@@ -55,29 +55,34 @@ dashboardPage(
         h2("Explore Data"),
 
         fluidRow(
-          box(
-            #title    = 'Map', status='primary', collapsible=T, 
-            width=12, 
-            div(
-              position = 'relative',
-
-              # leaflet map
-              leafletOutput('map1', height = 550),
-              
-              # hover text showing info on hover area
-              absolutePanel(
-                bottom=10, left=10, style='background-color:white',
-                textOutput('hoverText')),
-              
-              # region info, possibly with aster chart
-              absolutePanel(
-                top=10, right=10, # class='floater', # draggable=T, # style='background-color:white', # class='floater', # width='200px', height='200px', 
-                div(class='well', style='margin-right: 10px; margin-top: 10px; text-align: right; overflow: hidden;',
-                  htmlOutput('rgnInfo'),
-                  conditionalPanel(
-                    condition = "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
-#                    style     = 'float:right; display:block;')))
-                    style     = 'float:right; display:block;',
-                    asterOutput(outputId = "aster", width='100px', height='100px')))) # , width = '100px', height = '100px'
-                  
-                ) ))))))
+          tabBox(width=12,
+            
+            tabPanel(
+              'Map', #title    = 'Map', status='primary', collapsible=T, 
+              width=12, 
+              div(
+                position = 'relative',
+  
+                # leaflet map
+                leafletOutput('map1', height = 550),
+                
+                # hover text showing info on hover area
+                absolutePanel(
+                  bottom=10, left=10, style='background-color:white',
+                  textOutput('hoverText')),
+                
+                # region info, possibly with aster chart
+                absolutePanel(
+                  top=10, right=10, # class='floater', # draggable=T, # style='background-color:white', # class='floater', # width='200px', height='200px', 
+                  div(class='well', style='margin-right: 15px; margin-top: 44px; text-align: right; overflow: hidden;',
+                    htmlOutput('rgnInfo'),
+                    conditionalPanel(
+                      condition = "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
+                      style     = 'float:right; display:block;',
+                      asterOutput(outputId = "aster", width='100px', height='100px')))))),
+            
+              tabPanel(
+                'Components',
+                phylowidgetOutput("phylowidget"))
+                    
+                ))))))

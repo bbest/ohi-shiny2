@@ -281,4 +281,22 @@ shinyServer(function(input, output) {
     }
   })
   
+  
+  # components tab ----
+  
+  output$phylowidget <- renderPhylowidget(phylowidget(nwk))
+  observe({
+    if (is.null(input$close)) {
+      return()
+    }
+    else {
+      if (input$close > 0) {
+        tree <<- input$tree
+        print(tree)
+        stopApp()
+      }
+    }
+  })
+  
+  
 })

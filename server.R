@@ -198,6 +198,8 @@ shinyServer(function(input, output) {
   # writing to v$hi_id doesn't trigger reactivity unless the new value 
   # is different than the previous value).
   v <- reactiveValues(hi_id = 0) # set default to GLOBAL = 0
+  area_global <- round(sum(rgns@data$area_km2))
+  
   observe({
     
     if (length(input$map1_shape_mouseover$id) > 0){
@@ -224,11 +226,6 @@ shinyServer(function(input, output) {
   
   # add shape on hover
   observeEvent(v$hi_id,{
-  #observeEvent(input$map1_shape_mouseout$id,{
-    
-    # indicate to console that an event was triggered
-    #cat(sprintf("observeEvent map1_shape_mouseover$id: %s\n", str(input$map1_shape_mouseover$id)))
-    #cat(sprintf('observeEvent v$hi_id: %s\n', as.character(v$hi_id)))
     
     # clean previously highlighted shape
     leafletProxy("map1") %>% 
@@ -236,8 +233,6 @@ shinyServer(function(input, output) {
     
     # return if GLOBAL
     if (v$hi_id == 0) return()
-    
-    cat(sprintf('observeEvent v$hi_id: %s\n', as.character(v$hi_id)))
     
     # add shape
     leafletProxy("map1") %>% 
@@ -301,8 +296,14 @@ shinyServer(function(input, output) {
   output$hoverText <- renderText({
     # req(id())
     # id <- id()
-    #paste("name:",rgns[id,]@data$"rgn_name", ", area_km2:",round(rgns[id,]@data$"area_km2",2))
-    "test"
+    if (v$hi_id == 0){
+      sprintf("GLOBAL: %s km2", format(area_global, big.mark =','))
+    } else {
+      sprintf(
+        "%s: %s km2", 
+        subset(rgns@data, rgn_id==v$hi_id, rgn_name, drop=T), 
+        format(round(subset(rgns@data, rgn_id==v$hi_id, area_km2, drop=T)), big.mark =','))
+    }
   })
   
 })

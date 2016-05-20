@@ -76,6 +76,7 @@ dashboardPage(
                   htmlOutput('rgnInfo'),
                   conditionalPanel(
                     condition = "input.sel_type === 'output' & input.sel_output_goal=='Index' & input.sel_output_goal_dimension=='score'",
+#                    style     = 'float:right; display:block;')))
                     style     = 'float:right; display:block;',
                     asterOutput(outputId = "aster", width='100px', height='100px')))) # , width = '100px', height = '100px'
                   

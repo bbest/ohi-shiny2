@@ -160,14 +160,26 @@ shinyServer(function(input, output) {
     #     goal      == 'Index',
     #     dimension == 'score') %>%
     #   select(
-    #     rgn_id = region_id, 
+    #     rgn_id = region_id,
     #     value  = score) %>%
     #   select(rgn_id, value)
     # pal = colorNumeric(
     #   palette = 'RdYlBu',
     #   domain = data$value)
     
-    # plot map
+    # plot map with rgns$id to lookup data$value
+    pal = colorNumeric(
+      palette = 'RdYlBu',
+      #domain = data$value)
+      domain = selected$data$value)
+    #id2col = function(ids, d=data, col_id='rgn_id', col_val='value'){
+    id2col = function(ids, d=selected$data, col_id='rgn_id', col_val='value'){
+      pal(d[match(ids, d[[col_id]]), col_val]) 
+    }
+    leaflet() %>%
+      addPolygons(
+        data = rgns,
+        color = ~id2col(rgn_id))
     leaflet() %>%
       # TODO: add click() and hover() responsiveness? 
       #   see <http://rstudio.github.io/leaflet/shiny.html>,
@@ -176,9 +188,10 @@ shinyServer(function(input, output) {
       setView(0,0,2) %>%
       addPolygons(
         data = rgns, group = 'regions', layerId = rgns@data$rgn_id,
-        stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,
-        color = ~pal(selected$data$value)) %>%
-        #color = ~pal(data$value)) %>%
+        #stroke = 'gray', fillOpacity = 0.5, smoothFactor = 0.5,
+        stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
+        #color = ~pal(selected$data$value)) %>%
+        color = ~id2col(rgn_id)) %>%
       # addPolygons(
       #   group = "highlight", 
       #   data = rgns[match(16, rgns$rgn_id),], 
@@ -186,12 +199,10 @@ shinyServer(function(input, output) {
       # TODO: why does legend disappear when choosing type: Input Layer?
       addLegend(
         "bottomright", pal = pal, opacity = 0.5,
-        values = selected$data$value, title = selected$label)
         #values = data$value, title = 'Test')
+        values = selected$data$value, title = selected$label)
+        
   })
-  
-  # [error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242)
-  outputOptions(output, "map1", suspendWhenHidden=FALSE)
   
   # aster hover ----
   
@@ -206,8 +217,7 @@ shinyServer(function(input, output) {
   observe({
     
     if (length(input$map1_shape_mouseover$id) > 0){
-      
-      
+
       if (is.character(input$map1_shape_mouseover$id)){
         # strip highlight ("_hi") from id
         v$hi_id <- as.integer(sub('_hi', '', input$map1_shape_mouseover$id))
@@ -221,14 +231,12 @@ shinyServer(function(input, output) {
     } else {
       v$hi_id = 0
     } 
-    
-    #if (is.null(v$hi_id)) v$hi_id = 0
-    #if (length(v$hi_id) == 0) 
-    
   })
   
   # add shape on hover
   observeEvent(v$hi_id,{
+    
+    #req(input$map1) # otherwise [error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242) 
     
     # clean previously highlighted shape
     leafletProxy("map1") %>% 
@@ -248,33 +256,29 @@ shinyServer(function(input, output) {
   # aster plot
   output$aster = renderAster({
 
-    req(input$sel_type, input$sel_output_goal, input$sel_output_goal_dimension)
-    #req(v$hi_id)
+    req(input$sel_type, input$sel_output_goal, input$sel_output_goal_dimension, v$hi_id)
     
     # if default input Index score, show aster
     if (input$sel_type=='output' & input$sel_output_goal=='Index' & input$sel_output_goal_dimension=='score'){
       aster(
-        data = scores %>% 
+        data = scores %>%
           filter(
-            region_id == v$hi_id, 
+            region_id == v$hi_id,
             dimension == 'score') %>%
           left_join(goals, by='goal') %>%
           filter(is.na(parent), !is.na(order_color)) %>%
           arrange(order_color) %>%
           mutate(label=NA) %>%
-          select(id=goal, order=order_color, score, weight, color, label), 
+          select(id=goal, order=order_color, score, weight, color, label),
         background_color = "transparent",
         font_color = "black", stroke = "blue", font_size_center = "12px", font_size = "8px",
-        #width='100px', height='100px', 
         margin_top=5, margin_right=5, margin_bottom=5, margin_left=5)
     }
   })
   
   output$rgnInfo = renderText({
 
-    #if (length(v$hi_id) == 0){
     if (v$hi_id == 0){
-      # if no hover, Global
       txt = strong('Global')
     } else {
       req(get_selected())
@@ -290,17 +294,9 @@ shinyServer(function(input, output) {
     format(txt)
   })
   
-  # id = reactive({
-  #   id <- v$hi_id
-  #   m  <- match(id, rgns$rgn_id)
-  #   return(m)
-  # })
-  
   output$hoverText <- renderText({
-    # req(id())
-    # id <- id()
     if (v$hi_id == 0){
-      sprintf("GLOBAL: %s km2", format(area_global, big.mark =','))
+      sprintf("Global: %s km2", format(area_global, big.mark =','))
     } else {
       sprintf(
         "%s: %s km2", 

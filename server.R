@@ -1,7 +1,6 @@
 shinyServer(function(input, output) {
   
   ## get_selected() ----
-  ## take geojson's attribute table (rgns@data) and join with scores, filtered for user selection
   get_selected = reactive({
     req(input$sel_type)
     
@@ -12,7 +11,6 @@ shinyServer(function(input, output) {
         req(input$sel_output_goal)
         req(input$sel_output_goal_dimension)
         
-        #browser()
         list(
           data = scores %>%
             filter(
@@ -37,23 +35,24 @@ shinyServer(function(input, output) {
         # get data
         data = d_lyrs %>%
             filter(layer == input$sel_input_target_layer) %>%
-            select(
+            mutate(
               rgn_id = fld_id_num, 
               value  = fld_val_num)
 
         # if layer has category, filter
         if (!is.na(fld_category)){
-          req(input$sel_input_target_layer_category_year)
-          data = data %>%
-            filter(fld_category == input$sel_input_target_layer_category_year)
-        }
-        
-        # if layer has year, filter
-        if (!is.na(fld_year)){
           req(input$sel_input_target_layer_category)
           data = data %>%
             filter(fld_category == input$sel_input_target_layer_category)
         }
+        
+        # if layer has category year, filter
+        if (!is.na(fld_year)){
+          req(input$sel_input_target_layer_category_year)
+          data = data %>%
+            filter(fld_year == input$sel_input_target_layer_category_year)
+        }
+        
         
         # return list
         list(
@@ -85,49 +84,60 @@ shinyServer(function(input, output) {
   output$ui_sel_input <- renderUI({
     req(input$sel_input_target)
     
-   ui = tagList(selectInput(
+    target_layers = with(
+      layers_by_target %>%
+        filter(target == input$sel_input_target) %>%
+        mutate(label = sprintf('%s: %s', layer, name)),
+      setNames(layer, label))
+    
+    ui = tagList(selectInput(
       'sel_input_target_layer',
       label    = '3. Choose layer:',
-      choices  = with(
-        layers_by_target %>%
-          filter(target == input$sel_input_target) %>%
-          mutate(label = sprintf('%s: %s', layer, name)),
-        setNames(layer, label))))
+      choices  = target_layers,
+      selected = ifelse(
+        is.null(input$sel_input_target_layer), 
+        target_layers[1],
+        input$sel_input_target_layer)))
     
     if (!is.null(input$sel_input_target_layer)){
       
       fld_category = filter(layers, layer==input$sel_input_target_layer) %>% .$fld_category
+      
       if (!is.na(fld_category)){
+        
+        categories = d_lyrs %>%
+          filter(layer == input$sel_input_target_layer) %>%
+          distinct(fld_category) %>%
+          .$fld_category
+        
         ui = tagList(ui, selectInput(
           'sel_input_target_layer_category',
           label    = sprintf('4. Choose %s:', fld_category),
-          choices  = d_lyrs %>%
-            filter(layer == input$sel_input_target_layer) %>%
-            distinct(fld_category) %>%
-            .$fld_category))
+          choices  = categories,
+          selected = ifelse(
+            is.null(input$sel_input_target_layer_category), 
+            categories[1],
+            input$sel_input_target_layer_category)))
         
-        fld_year = filter(layers, layer==input$sel_input_target_layer) %>% .$fld_year
+        fld_year = filter(layers, layer == input$sel_input_target_layer) %>% .$fld_year
+        
         if (!is.na(fld_year) & !is.null(input$sel_input_target_layer_category)){
-          ui = tagList(ui, selectInput(
-          'sel_input_target_layer_category_year',
-          label    = '5. Choose year:',
-          choices  = d_lyrs %>%
+          years = d_lyrs %>%
             filter(
               layer        == input$sel_input_target_layer,
               fld_category == input$sel_input_target_layer_category) %>%
             distinct(fld_year) %>%
-            .$fld_year))  }}}
+            .$fld_year
+  
+          ui = tagList(ui, selectInput(
+          'sel_input_target_layer_category_year',
+          label    = '5. Choose year:',
+          choices  = years,
+          selected = ifelse(
+            is.null(input$sel_input_target_layer_category_year), 
+            years[1],
+            input$sel_input_target_layer_category_year)))  }}}
           
-   # TODO: fix problem with this not returning extra drop-downs for category and year
-   # layers %>% filter(!is.na(fld_category) & !is.na(fld_year)) %>% select(targets, layer, name, fld_id_num, fld_category, fld_year, fld_val_num)
-   # MAR | mar_harvest_tonnes         | species_code
-   # NP  | np_harvest_tonnes          | product
-   # NP  | np_harvest_tonnes_relative | product
-   # layers %>% filter(!is.na(fld_category) & is.na(fld_year))
-   # cs_habitat_extent
-   #cat(file=stderr(), format(ui))
-   #cat(file=stderr(), '\n----\n')
-   #browser()
    return(ui) })
   
   # output$var_description ----
@@ -140,39 +150,16 @@ shinyServer(function(input, output) {
     
     # get data from selection (get_selected() is the reactive function defined above)
     selected = get_selected()
-    # # drop value in rgns spatial data frame if exists
-    # rgns@data = rgns@data[,names(rgns@data) != 'value'] # JA/JL not sure what this is doing; 'value' column not in rgns@data geojson
-    # # merge value to rgns
-    # rgns@data = rgns@data %>%
-    #   left_join(
-    #     selected$data,
-    #     by='rgn_id')
-    
+
     # set color palette
     pal = colorNumeric(
       palette = 'RdYlBu',
-      #domain = rgns$value)
       domain = selected$data$value)
-    
-    # # debug ----
-    # data = scores %>%
-    #   filter(
-    #     goal      == 'Index',
-    #     dimension == 'score') %>%
-    #   select(
-    #     rgn_id = region_id,
-    #     value  = score) %>%
-    #   select(rgn_id, value)
-    # pal = colorNumeric(
-    #   palette = 'RdYlBu',
-    #   domain = data$value)
     
     # plot map with rgns$id to lookup data$value
     pal = colorNumeric(
       palette = 'RdYlBu',
-      #domain = data$value)
       domain = selected$data$value)
-    #id2col = function(ids, d=data, col_id='rgn_id', col_val='value'){
     id2col = function(ids, d=selected$data, col_id='rgn_id', col_val='value'){
       pal(d[match(ids, d[[col_id]]), col_val]) 
     }
@@ -181,19 +168,14 @@ shinyServer(function(input, output) {
         data = rgns,
         color = ~id2col(rgn_id))
     leaflet() %>%
-      # TODO: add click() and hover() responsiveness? 
-      #   see <http://rstudio.github.io/leaflet/shiny.html>,
-      #   ["Highlight" polygon on hover? #195](https://github.com/rstudio/leaflet/issues/195)
       addProviderTiles('Stamen.TonerLite', options=tileOptions(noWrap=TRUE)) %>%
       setView(0,0,2) %>%
       addPolygons(
         data = rgns, group = 'regions', layerId = rgns@data$rgn_id,
         stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
         color = ~id2col(rgn_id)) %>%
-      # TODO: why does legend disappear when choosing type: Input Layer?
       addLegend(
         "bottomright", pal = pal, opacity = 0.5,
-        #values = data$value, title = 'Test')
         values = selected$data$value, title = selected$label)
         
   })
@@ -230,7 +212,7 @@ shinyServer(function(input, output) {
   # add shape on hover
   observeEvent(v$hi_id,{
     
-    #req(input$map1) # otherwise [error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242) 
+    #req(input$map1) # otherwise [JS console error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242) 
     
     # clean previously highlighted shape
     leafletProxy("map1") %>% 

@@ -55,8 +55,8 @@ dashboardPage(
         h2("Explore Data"),
 
         fluidRow(
-          tabBox(width=12,
-            
+          tabBox(width=12, selected='Components',
+          
             tabPanel(
               'Map', #title    = 'Map', status='primary', collapsible=T, 
               width=12, 
@@ -83,6 +83,7 @@ dashboardPage(
             
               tabPanel(
                 'Components',
-                phylowidgetOutput("phylowidget"))
+                visNetworkOutput("network"),
+                textOutput("message", container = h3))
                     
                 ))))))

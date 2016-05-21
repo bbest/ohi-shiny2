@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
   library(htmlwidgets) 
   library(jsonlite)
   library(aster) # devtools::install_github('FrissAnalytics/ohi-aster', subdir='asterHTMLwidget')
+  library(visNetwork)
 })
   
 #options(shiny.reactlog=TRUE)

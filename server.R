@@ -194,29 +194,12 @@ shinyServer(function(input, output) {
   
   # aster hover ----
   
-  observe({
-    
-    if (length(input$map1_shape_mouseover$id) > 0){
-
-      # debug
-      isolate(v$msg <- paste(now_s(), '-- mouseover > 0| mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
-      
-      if (is.character(input$map1_shape_mouseover$id)){
-        # strip highlight ("_hi") from id
-        v$hi_id <- as.integer(sub('_hi', '', input$map1_shape_mouseover$id))
-        isolate(v$msg <- paste(now_s(), '    strip highlight ("_hi") from id | v$hi_id=', v$hi_id, br(), v$msg))
-      } else {
-        v$hi_id <- input$map1_shape_mouseover$id
-      }
-        
-      if (length(input$map1_shape_mouseout$id) > 0 && input$map1_shape_mouseout$id == input$map1_shape_mouseover$id){
-        v$hi_id <- 0
-        isolate(v$msg <- paste(now_s(), '-- mouseover > 0 & mouseout == mouseover | mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
-      }
-    } else {
-      v$hi_id = 0
-      isolate(v$msg <- paste(now_s(), '-- !(mouseover > 0) | mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
-    } 
+  # handle mouseover/mouseout per leaflet::examples/shiny.R style
+  observeEvent(input$map1_shape_mouseover, {
+    v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_mouseover$id)))
+  })
+  observeEvent(input$map1_shape_mouseout, {
+    v$hi_id <- 0
   })
   
   # add shape on hover

@@ -11,10 +11,15 @@ suppressPackageStartupMessages({
   library(jsonlite)
   library(aster) # devtools::install_github('FrissAnalytics/ohi-aster', subdir='asterHTMLwidget')
   library(visNetwork)
+  library(lubridate)
 })
   
 #options(shiny.reactlog=TRUE)
 #setwd('app')
+
+now_s = function(){
+  format(now(), format='%H:%M:%S')
+}
 
 # load rdata for faster startup
 rdata = 'data/default.Rdata'

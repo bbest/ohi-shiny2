@@ -146,10 +146,22 @@ shinyServer(function(input, output) {
     get_selected()$description })
   
   # output$map1 ----
+  
+  # input$map_shape_mouseover gets updated a lot, even if the id doesn't change.
+  # We don't want to update the polygons and stateInfo except when the id
+  # changes, so use v$hi_id to insulate the downstream reactives (as 
+  # writing to v$hi_id doesn't trigger reactivity unless the new value 
+  # is different than the previous value).
+  v <- reactiveValues(hi_id = 0, msg = '') # set default to GLOBAL = 0
+  area_global <- round(sum(rgns@data$area_km2))
+  
   output$map1 <- renderLeaflet({
     
     # get data from selection (get_selected() is the reactive function defined above)
     selected = get_selected()
+    
+    # debug
+    isolate(v$msg <- paste(now_s(), '-- renderLeaflet()', br(), v$msg))
 
     # set color palette
     pal = colorNumeric(
@@ -182,30 +194,28 @@ shinyServer(function(input, output) {
   
   # aster hover ----
   
-  # input$map_shape_mouseover gets updated a lot, even if the id doesn't change.
-  # We don't want to update the polygons and stateInfo except when the id
-  # changes, so use v$hi_id to insulate the downstream reactives (as 
-  # writing to v$hi_id doesn't trigger reactivity unless the new value 
-  # is different than the previous value).
-  v <- reactiveValues(hi_id = 0, msg = '') # set default to GLOBAL = 0
-  area_global <- round(sum(rgns@data$area_km2))
-  
   observe({
     
     if (length(input$map1_shape_mouseover$id) > 0){
 
+      # debug
+      isolate(v$msg <- paste(now_s(), '-- mouseover > 0| mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
+      
       if (is.character(input$map1_shape_mouseover$id)){
         # strip highlight ("_hi") from id
         v$hi_id <- as.integer(sub('_hi', '', input$map1_shape_mouseover$id))
+        isolate(v$msg <- paste(now_s(), '    strip highlight ("_hi") from id | v$hi_id=', v$hi_id, br(), v$msg))
       } else {
         v$hi_id <- input$map1_shape_mouseover$id
       }
         
       if (length(input$map1_shape_mouseout$id) > 0 && input$map1_shape_mouseout$id == input$map1_shape_mouseover$id){
         v$hi_id <- 0
+        isolate(v$msg <- paste(now_s(), '-- mouseover > 0 & mouseout == mouseover | mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
       }
     } else {
       v$hi_id = 0
+      isolate(v$msg <- paste(now_s(), '-- !(mouseover > 0) | mouseover=', input$map1_shape_mouseover$id, ', mouseout=', input$map1_shape_mouseout$id, ', hi_id=', v$hi_id, br(), v$msg))
     } 
   })
   
@@ -282,7 +292,7 @@ shinyServer(function(input, output) {
   })
   
   
-  # components tab ----
+  # elements tab ----
   
   output$network <- renderVisNetwork({
     

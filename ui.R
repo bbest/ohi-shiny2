@@ -55,7 +55,7 @@ dashboardPage(
         h2("Explore Data"),
 
         fluidRow(
-          tabBox(width=12, selected='Components',
+          tabBox(width=12, selected='Map',
           
             tabPanel(
               'Map', #title    = 'Map', status='primary', collapsible=T, 
@@ -82,8 +82,12 @@ dashboardPage(
                       asterOutput(outputId = "aster", width='100px', height='100px')))))),
             
               tabPanel(
-                'Components',
-                visNetworkOutput("network"),
-                textOutput("message", container = h3))
-                    
-                ))))))
+                'Elements',
+                visNetworkOutput("network")))),
+        
+        fluidRow(
+          box(
+            'Messages', color='yellow', collapsible = T, width = 12,
+            htmlOutput("message")))
+        
+        ))))

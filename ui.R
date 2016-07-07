@@ -86,8 +86,8 @@ dashboardPage(
                 visNetworkOutput("network")))),
         
         fluidRow(
-          box(
-            'Messages', color='yellow', collapsible = T, width = 12,
-            htmlOutput("message")))
+            box(
+              'Messages', color='yellow', collapsible = T, width = 12, collapsed=T,
+              htmlOutput("message")))
         
         ))))

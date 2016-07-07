@@ -17,6 +17,7 @@ suppressPackageStartupMessages({
 #options(shiny.reactlog=TRUE)
 #setwd('app')
 
+
 now_s = function(){
   format(now(), format='%H:%M:%S')
 }

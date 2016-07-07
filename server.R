@@ -197,9 +197,11 @@ shinyServer(function(input, output) {
   # handle mouseover/mouseout per leaflet::examples/shiny.R style
   observeEvent(input$map1_shape_mouseover, {
     v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_mouseover$id)))
+    isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseover | hi_id=', v$hi_id, br(), v$msg))
   })
   observeEvent(input$map1_shape_mouseout, {
     v$hi_id <- 0
+    isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseout | hi_id=', v$hi_id, br(), v$msg))
   })
   
   # add shape on hover

@@ -152,7 +152,7 @@ shinyServer(function(input, output) {
   # changes, so use v$hi_id to insulate the downstream reactives (as 
   # writing to v$hi_id doesn't trigger reactivity unless the new value 
   # is different than the previous value).
-  v <- reactiveValues(hi_id = 0, msg = '') # set default to GLOBAL = 0
+  v <- reactiveValues(hi_id = 0, msg = '', hi_freeze=F) # set default to GLOBAL = 0
   area_global <- round(sum(rgns@data$area_km2))
   
   output$map1 <- renderLeaflet({
@@ -196,18 +196,39 @@ shinyServer(function(input, output) {
   
   # handle mouseover/mouseout per leaflet::examples/shiny.R style
   observeEvent(input$map1_shape_mouseover, {
-    v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_mouseover$id)))
-    isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseover | hi_id=', v$hi_id, br(), v$msg))
+    if (!v$hi_freeze){
+      v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_mouseover$id)))
+      #isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseover | hi_id=', v$hi_id, br(), v$msg))
+    }
   })
   observeEvent(input$map1_shape_mouseout, {
-    v$hi_id <- 0
-    isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseout | hi_id=', v$hi_id, br(), v$msg))
+    if (!v$hi_freeze){
+      v$hi_id = 0
+      #isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseout | hi_id=', v$hi_id, br(), v$msg))
+    }
+  })
+  
+  # click on country eez to freeze flower plot
+  observeEvent(input$map1_shape_click, {
+    v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_click$id)))
+    v$hi_freeze <- T
+    isolate(v$msg <- paste(now_s(), '-- map1_shape_click | hi_id=', v$hi_id, br(), v$msg))
+  })
+  
+  # click on anywhere on map to unfreeze flower plot and default back to global
+  observeEvent(input$map1_click, {
+    if (v$hi_freeze){
+      v$hi_freeze <- F
+      v$hi_id <- 0
+    }
+    isolate(v$msg <- paste(now_s(), '-- map1_click | hi_id=', v$hi_id, br(), v$msg))
   })
   
   # add shape on hover
   observeEvent(v$hi_id,{
     
     #req(input$map1) # otherwise [JS console error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242) 
+    isolate(v$msg <- paste(now_s(), '-- observeEvent(hi_id) | hi_id=', v$hi_id, br(), v$msg))
     
     # clean previously highlighted shape
     leafletProxy("map1") %>% 

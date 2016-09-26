@@ -331,5 +331,24 @@ shinyServer(function(input, output) {
     v$msg <- paste("network_selected", input$network_selected)
   })
   
+  output$sunburst <- renderSunburst({
+    #invalidateLater(1000, session)
+    
+    sequences <- sequences[sample(nrow(sequences),1000),]
+    
+    add_shiny(sunburst(
+      sequences, 
+      explanation = "function(d){return d.name}"))
+  })
+  
+  
+  selection <- reactive({
+    input$sunburst_mouseover
+  })
+  
+  output$selection <- renderText(selection())
+  
+  
+  
   output$message <- renderText(v$msg)
 })

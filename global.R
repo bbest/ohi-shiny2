@@ -1,21 +1,63 @@
+if (!'tidyverse' %in% installed.packages()[,1]) install.packages('tidyverse')
+library(tidyverse)
+
+pkgs_df = tibble::tribble(
+  ~package   ,     ~location,                                                    ~install_args, ~version_min,
+  'tidyverse',        'CRAN',                                                               '',           '',
+  'lubridate',        'CRAN',                                                               '',           '',
+  'rgdal',            'CRAN',                                                               '',           '',
+  'leaflet',          'CRAN',                                                               '',           '',
+  'shiny',            'CRAN',                                                               '',           '',
+  'shinydashboard',   'CRAN',                                                               '',           '',
+  'markdown',         'CRAN',                                                               '',           '',
+  'htmlwidgets',      'CRAN',                                                               '',           '',
+  'jsonlite',         'CRAN',                                                               '',           '',
+  'visNetwork',       'CRAN',                                                               '',           '',
+  'aster'    ,      'Github', list(repo='FrissAnalytics/ohi-aster' , subdir='asterHTMLwidget'),           '',
+  'sunburstR',      'Github',                           list(repo='timelyportfolio/sunburstR'),           '')
+
+install_packages = function(pkgs){
+  for (i in 1:nrow(pkgs)){ # i = 11
+    p = pkgs$package[i]
+    if (!p %in% installed.packages()[,1]){
+      if (pkgs$location[i] == 'CRAN'){
+        install.packages(p)
+      } else if (pkgs$location[i] == 'CRAN'){
+        if (!'devtools' %in% installed.packages()[,1]) install.packages('devtools')
+        do.call(devtools::install_github, pkgs$install_args[[i]])
+      } else {
+        stop(sprintf('Needed package "%s" not installed, and location "%s" not understood', p, pkgs$location[i]))
+      }
+    }  
+  }
+}
+install_packages(pkgs_df)
+
 suppressPackageStartupMessages({
+  library(tidyverse)
+  library(lubridate)
   library(rgdal)
   library(leaflet)
-  library(dplyr)
-  library(readr)
-  library(tidyr)
   library(shiny)
   library(shinydashboard)
   library(markdown)
   library(htmlwidgets) 
   library(jsonlite)
-  library(aster) # devtools::install_github('FrissAnalytics/ohi-aster', subdir='asterHTMLwidget')
+  library(aster)      # devtools::install_github('FrissAnalytics/ohi-aster', subdir='asterHTMLwidget')
   library(visNetwork)
-  library(lubridate)
+  library(sunburstR)  # devtools::install_github('timelyportfolio/sunburstR')
 })
-  
+
+
 #options(shiny.reactlog=TRUE)
 #setwd('app')
+
+# TEMP: sunburstr demo
+sequences <- read.csv(
+  system.file("examples/visit-sequences.csv",package="sunburstR")
+  ,header=F
+  ,stringsAsFactors = FALSE
+)
 
 
 now_s = function(){

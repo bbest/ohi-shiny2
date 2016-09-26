@@ -55,7 +55,8 @@ dashboardPage(
         h2("Explore Data"),
 
         fluidRow(
-          tabBox(width=12, selected='Map',
+          #tabBox(width=12, selected='Map',
+          tabBox(width=12, selected='Elements',
           
             tabPanel(
               'Map', #title    = 'Map', status='primary', collapsible=T, 
@@ -83,7 +84,9 @@ dashboardPage(
             
               tabPanel(
                 'Elements',
-                visNetworkOutput("network")))),
+                #visNetworkOutput("network")))),
+                sunburstOutput("sunburst"),
+                textOutput("selection")))),
         
         fluidRow(
             box(

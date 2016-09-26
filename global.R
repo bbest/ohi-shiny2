@@ -22,7 +22,7 @@ install_packages = function(pkgs){
     if (!p %in% installed.packages()[,1]){
       if (pkgs$location[i] == 'CRAN'){
         install.packages(p)
-      } else if (pkgs$location[i] == 'CRAN'){
+      } else if (pkgs$location[i] == 'Github'){
         if (!'devtools' %in% installed.packages()[,1]) install.packages('devtools')
         do.call(devtools::install_github, pkgs$install_args[[i]])
       } else {

@@ -1,0 +1,29 @@
+---
+title: "layers"
+author: "Ben Best"
+date: "September 1, 2016"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ao_access
+
+The opportunity for artisanal and recreational fishing based on the quality of management of the small- scale fishing sector (Mora et al 2009).
+
+Data sources:
+
+- Mora, C., Myers, R.A., Coll, M., Libralato, S., Pitcher, T.J., Sumaila, R.U., Worm, B. (2009). **Management Effectiveness of the World's Marine Fisheries**. _PLoS Biol_, 7(6), e1000131. [doi:10.1371/journal.pbio.1000131](http://dx.doi.org/10.1371/journal.pbio.1000131)
+
+## ao_need	
+
+Purchasing power parity as a proxy for subsistence fishing need, by region	"The per capita purchasing power parity (PPP) adjusted gross domestic product (GDP): GDPpcPPP.
+
+Data sources:
+
+- The World Bank [GDP per capita, PPP (current international $)](http://data.worldbank.org/indicator/NY.GDP.PCAP.PP.CD)

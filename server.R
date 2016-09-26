@@ -300,55 +300,43 @@ shinyServer(function(input, output) {
   
   # elements tab ----
   
-  output$network <- renderVisNetwork({
-    
-    # http://datastorm-open.github.io/visNetwork/options.html
-    nb <- 10
-    nodes <- data.frame(id = 1:nb, label = paste("Label", 1:nb),
-                        group = sample(LETTERS[1:3], nb, replace = TRUE), value = 1:nb,
-                        title = paste0("<p>", 1:nb,"<br>Tooltip !</p>"), stringsAsFactors = FALSE)
-    
-    edges <- data.frame(from = c(8,2,7,6,1,8,9,4,6,2),
-                        to = c(3,7,2,7,9,1,5,3,2,9),
-                        value = rnorm(nb, 10), label = paste("Edge", 1:nb),
-                        title = paste0("<p>", 1:nb,"<br>Edge Tooltip !</p>"))
-  
-    visNetwork(nodes, edges, height = "500px", width = "100%") %>% 
-      visOptions(
-        highlightNearest = TRUE, nodesIdSelection = TRUE,
-        selectedBy = "group") %>%
-      visLayout(randomSeed = 123) %>% 
-      # http://datastorm-open.github.io/visNetwork/interaction.html
-      visInteraction(
-        navigationButtons = TRUE, 
-        keyboard = TRUE, tooltipDelay = 0)
-  })
-  
-  observeEvent(input$network_selected, {
-    v$msg <- paste("network_selected", input$network_selected)
-  })
-  observeEvent(input$network_selectedBy, {
-    v$msg <- paste("network_selected", input$network_selected)
+  get_network = reactive({
+    # get network based on selection
+    net = list()
+    net$nodes = nodes %>%
+      filter(
+        group %in% c('Index','goal','subgoal', input$nav_dims)) # 'layer for status','layer for pressures','layer for resilience'
+    net$edges = edges %>%
+      filter(
+        from %in% nodes$id,
+        to %in% nodes$id)
+    return(net)
   })
   
   output$sunburst <- renderSunburst({
-    #invalidateLater(1000, session)
+    # prep Elements and paths for sunburstR ----
+    # TODO: 
+    # - add description inset box: full name, category, description (and link) of element
+    # - make clickable: a) hold on description box to click link there, b) clickable to link directly
     
-    sequences <- sequences[sample(nrow(sequences),1000),]
+    add_shiny(
+      sunburst(
+        paths %>% select(path, layer_weight), 
+        percent=F,
+        colors = cols,
+        legendOrder = c(names(layer_colors), goals$goal),
+        explanation = "function(d){return d.name}",
+        sortFunction = htmlwidgets::JS(sort_fxn)))
     
-    add_shiny(sunburst(
-      sequences, 
-      explanation = "function(d){return d.name}"))
   })
-  
   
   selection <- reactive({
     input$sunburst_mouseover
   })
   
-  output$selection <- renderText(selection())
+  output$selection <- renderUI(
+    selection())
   
-  
-  
-  output$message <- renderText(v$msg)
+  # message ----
+  output$message <- renderUI({ HTML(v$msg) })
 })

@@ -112,6 +112,19 @@ if (!file.exists(rdata)){
   rgns = geojsonio::geojson_read(geojson, what="sp")
   if ('rgn_nam' %in% names(rgns@data) & !'rgn_name' %in% names(rgns@data)) rgns@data = rgns@data %>% mutate(rgn_name = rgn_nam)
 
+  # get countries for Mollweide projection
+  if ('projection' %in% names(y) && y$projection == 'Mollweide'){
+    
+    # [leaflet/proj4Leaflet.R#L36-L55 · rstudio/leaflet](https://github.com/rstudio/leaflet/blob/1bc41eebd5220735a309c5b4bcfae6784cc9026d/inst/examples/proj4Leaflet.R#L36-L55)
+    # addProviderTiles('Stamen.TonerLite') does not work, so use country polygons
+    library(sp)
+    srcURL <- "https://cdn.rawgit.com/turban/Leaflet.Graticule/master/examples/lib/countries-110m.js"
+    v8 <- V8::v8()
+    v8$source(srcURL)
+    geoJSON <- geojsonio::as.json(v8$get('countries'))
+    countries <- geojsonio::geojson_sp(geoJSON)
+  }
+  
   # NOTE: skipping other spatial fields 'saup_id','fao_id'
   
   goals_colors = colorRampPalette(RColorBrewer::brewer.pal(10, 'Spectral'), space='Lab')(nrow(goals))

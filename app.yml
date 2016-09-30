@@ -1,13 +1,14 @@
 # configuration for http://ohi-science.nceas.ucsb.edu/bhi
-app_title:        Baltic
+app_title:        Global
 gh_owner:         OHI-Science
-gh_repo:          bhi
-gh_slug:          OHI-Science/bhi
-gh_url:           https://github.com/OHI-Science/bhi.git
-app_url:          http://ohi-science.nceas.ucsb.edu/bhi
+gh_repo:          ohi-global
+gh_slug:          OHI-Science/ohi-global
+gh_url:           https://github.com/OHI-Science/ohi-global.git
+app_url:          http://ohi-science.nceas.ucsb.edu/ohi-global
 default_branch:   draft
-default_scenario: baltic2015
+default_scenario: eez2015
 ohirepos_commit:  78221328ae0773611829a7bf45992beca197af96
 debug:            False
 map_shrink_pct:   10
+projection:       Mollweide
 last_updated:     2016-09-29

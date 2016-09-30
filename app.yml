@@ -1,0 +1,12 @@
+# configuration for http://ohi-science.nceas.ucsb.edu/bhi
+app_title:        Baltic                             # study_area
+gh_owner:         OHI-Science                              # git_owner
+gh_repo:          bhi                               # git_repo
+gh_slug:          OHI-Science/bhi                               # git_slug
+gh_url:           https://github.com/OHI-Science/bhi.git                                # git_url
+app_url:          http://ohi-science.nceas.ucsb.edu/bhi
+default_branch:   draft
+default_scenario: baltic2015
+ohirepos_commit:  78221328ae0773611829a7bf45992beca197af96
+debug:            False
+last_updated:     2016-09-29

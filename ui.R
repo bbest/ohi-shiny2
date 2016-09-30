@@ -48,7 +48,7 @@ dashboardPage(
       
       tabItem(
         tabName='intro',
-        includeMarkdown("data/introduction.md")),
+        includeMarkdown("intro.md")),
       
       tabItem(
         tabName='explore',

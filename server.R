@@ -147,11 +147,7 @@ shinyServer(function(input, output) {
   
   # output$map1 ----
   
-  # input$map_shape_mouseover gets updated a lot, even if the id doesn't change.
-  # We don't want to update the polygons and stateInfo except when the id
-  # changes, so use v$hi_id to insulate the downstream reactives (as 
-  # writing to v$hi_id doesn't trigger reactivity unless the new value 
-  # is different than the previous value).
+  # input$map_shape_mouseover gets updated a lot, even if the id doesn't change, so use reactiveValues
   v <- reactiveValues(hi_id = 0, msg = '', hi_freeze=F) # set default to GLOBAL = 0
   area_global <- round(sum(rgns@data$area_km2))
   
@@ -169,31 +165,70 @@ shinyServer(function(input, output) {
       domain = selected$data$value)
     
     # plot map with rgns$id to lookup data$value
-    pal = colorNumeric(
-      palette = 'RdYlBu',
-      domain = selected$data$value)
     id2col = function(ids, d=selected$data, col_id='rgn_id', col_val='value'){
       pal(d[match(ids, d[[col_id]]), col_val]) 
     }
-    leaflet() %>%
-      addPolygons(
-        data = rgns,
-        color = ~id2col(rgn_id))
+    r_v = rgns@data %>% left_join(selected$data, by='rgn_id')
+    
+    bbox_shrink = function(p, pct){
+      b = bbox(p)
+      dx = (b[3] - b[1]) * (pct/100)
+      dy = (b[4] - b[2]) * (pct/100)
+      c(b[1] + dx, b[2] + dy, b[3] - dx, b[4] - dy)
+    }
+    b = bbox_shrink(rgns, y$map_shrink_pct)
+    
     leaflet() %>%
       addProviderTiles('Stamen.TonerLite', options=tileOptions(noWrap=TRUE)) %>%
-      setView(0,0,2) %>%
       addPolygons(
-        data = rgns, group = 'regions', layerId = rgns@data$rgn_id,
+        data = rgns, group = 'regions',
+        layerId = ~rgn_id, 
+        label = mapply(function(n, v) {
+          HTML(sprintf("<em>%s:</em> %s", htmlEscape(n), htmlEscape(v)))},
+          r_v$rgn_name, r_v$value, SIMPLIFY = F),
+        labelOptions = lapply(1:nrow(r_v), function(x) {
+          labelOptions(direction='auto') }),
         stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
         color = ~id2col(rgn_id)) %>%
       addLegend(
         "bottomright", pal = pal, opacity = 0.5,
-        values = selected$data$value, title = selected$label)
-        
+        values = selected$data$value, title = selected$label) %>%
+      fitBounds(lng1 = b[1], lat1 = b[2], lng2 = b[3], lat2 = b[4]) %>%
+      htmlwidgets::onRender("
+        function(el, t) {
+          var defaultStyle = {
+            opacity:0.5,
+            weight: 1,
+            fillOpacity: 0.7,
+          };
+          var highlightStyle = {
+            opacity:1,
+            weight: 3,
+            fillOpacity: 1,
+          };
+
+          var myMap = this;
+          var layers = myMap._layers;
+          for(var i in layers) {
+            var layer = layers[i];
+            if(layer.label) {
+              layer.on('mouseover',
+                function(e) {
+                  this.setStyle(highlightStyle);
+                  this.bringToFront();
+              });
+              layer.on('mouseout',
+                function(e) {
+                  this.setStyle(defaultStyle);
+                  this.bringToBack();
+              });
+            }
+          }
+        }")
   })
   
   # aster hover ----
-  
+
   # handle mouseover/mouseout per leaflet::examples/shiny.R style
   observeEvent(input$map1_shape_mouseover, {
     if (!v$hi_freeze){
@@ -230,19 +265,6 @@ shinyServer(function(input, output) {
     #req(input$map1) # otherwise [JS console error `Couldn't find map with id map`](https://github.com/rstudio/leaflet/issues/242) 
     isolate(v$msg <- paste(now_s(), '-- observeEvent(hi_id) | hi_id=', v$hi_id, br(), v$msg))
     
-    # clean previously highlighted shape
-    leafletProxy("map1") %>% 
-      clearGroup("highlight")
-    
-    # return if GLOBAL
-    if (v$hi_id == 0) return()
-    
-    # add shape
-    leafletProxy("map1") %>% 
-      addPolygons(
-        data = rgns[match(v$hi_id, rgns$rgn_id),], 
-        group = "highlight", layerId = sprintf('%d_hi', v$hi_id),
-        stroke = T, color = "gray", weight = 5, fillColor = "transparent")
   })
   
   # aster plot
@@ -271,7 +293,7 @@ shinyServer(function(input, output) {
   output$rgnInfo = renderText({
 
     if (v$hi_id == 0){
-      txt = strong('Global')
+      txt = strong(y$app_title)
     } else {
       req(get_selected())
       

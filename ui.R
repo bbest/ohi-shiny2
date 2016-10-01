@@ -88,9 +88,6 @@ dashboardPage(
                 sunburstOutput("sunburst"),
                 textOutput("selection")))),
         
-        fluidRow(
-            box(
-              'Messages', color='yellow', collapsible = T, width = 12, collapsed=T,
-              htmlOutput("message")))
+        uiOutput('ui_msg')
         
         ))))

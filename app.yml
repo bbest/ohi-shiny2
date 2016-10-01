@@ -10,5 +10,5 @@ default_scenario: eez2015
 ohirepos_commit:  78221328ae0773611829a7bf45992beca197af96
 debug:            False
 map_shrink_pct:   10
-projection:       Mollweide
+projection:       Mollweide  # Mercator or Mollweide
 last_updated:     2016-09-29

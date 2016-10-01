@@ -170,6 +170,7 @@ shinyServer(function(input, output) {
     }
     r_v = rgns@data %>% left_join(selected$data, by='rgn_id')
 
+    if(!'map_shrink_pct' %in% names(y)) stop('Missing parameter map_shrink_pct in app.yml.')
     bbox_shrink = function(p, pct){
       b = bbox(p)
       dx = (b[3] - b[1]) * (pct/100)
@@ -178,12 +179,46 @@ shinyServer(function(input, output) {
     }
     b = bbox_shrink(rgns, y$map_shrink_pct)
 
+    map_render_mouseover = "
+      function(el, t) {
+        var defaultStyle = {
+          // stroke, ie polygon border
+            opacity:     0.5,
+            weight:      2,
+          // fill, ie polygon interior
+            fillOpacity: 0.5,
+        };
+        var highlightStyle = {
+          // stroke, ie polygon border
+            opacity:     0.9,
+            weight:      6,
+          // fill, ie polygon interior
+            fillOpacity: 0.9,
+        };
 
-    
+        var myMap = this;
+        var layers = myMap._layers;
+        for(var i in layers) {
+          var layer = layers[i];
+          if(layer.label) {
+            layer.on('mouseover',
+              function(e) {
+                this.setStyle(highlightStyle);
+                // this.bringToFront();
+            });
+            layer.on('mouseout',
+              function(e) {
+                this.setStyle(defaultStyle);
+                // this.bringToBack();
+            });
+          }
+        }
+      }"
+
     if ('projection' %in% names(y) && y$projection == 'Mollweide'){
       # [leaflet/proj4Leaflet.R#L36-L55 · rstudio/leaflet](https://github.com/rstudio/leaflet/blob/1bc41eebd5220735a309c5b4bcfae6784cc9026d/inst/examples/proj4Leaflet.R#L36-L55)
       # addProviderTiles('Stamen.TonerLite') does not work, so use countries polygons loaded in global.R
-      
+
       leaflet(
         options =
           leafletOptions(
@@ -192,8 +227,9 @@ shinyServer(function(input, output) {
                            resolutions = c(65536, 32768, 16384, 8192, 4096, 2048)))) %>%
         addGraticule(style= list(color= '#999', weight= 0.5, opacity= 1)) %>%
         addGraticule(sphere = TRUE, style= list(color= '#777', weight= 1, opacity= 0.25)) %>%
-        #addProviderTiles('Stamen.TonerLite') %>%
-        addPolygons(data=countries, group = 'land', weight = 1, color = gplots::col2hex('gray30')) %>%
+        #addProviderTiles('Stamen.TonerLite') %>% # cannot seem to use tiles with projected crs
+        addPolygons(
+          data=countries, group = 'land', weight = 1, color = '#4D4D4D') %>% # gplots::col2hex('gray30'): '#4D4D4D'
         addPolygons(
           data = rgns, group = 'regions',
           layerId = ~rgn_id,
@@ -202,43 +238,13 @@ shinyServer(function(input, output) {
             r_v$rgn_name, r_v$value, SIMPLIFY = F),
           labelOptions = lapply(1:nrow(r_v), function(x) {
             labelOptions(direction='auto') }),
-          stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
+          stroke = TRUE, opacity=0.5, weight=2, fillOpacity = 0.5, smoothFactor = 0.5,
           color = ~id2col(rgn_id)) %>%
         addLegend(
           "bottomright", pal = pal, opacity = 0.5,
           values = selected$data$value, title = selected$label) %>%
         fitBounds(lng1 = b[1], lat1 = b[2], lng2 = b[3], lat2 = b[4]) %>%
-        htmlwidgets::onRender("
-          function(el, t) {
-            var defaultStyle = {
-              opacity:0.5,
-              weight: 1,
-              fillOpacity: 0.7,
-            };
-            var highlightStyle = {
-              opacity:1,
-              weight: 3,
-              fillOpacity: 1,
-            };
-
-            var myMap = this;
-            var layers = myMap._layers;
-            for(var i in layers) {
-              var layer = layers[i];
-              if(layer.label) {
-                layer.on('mouseover',
-                  function(e) {
-                    this.setStyle(highlightStyle);
-                    this.bringToFront();
-                });
-                layer.on('mouseout',
-                  function(e) {
-                    this.setStyle(defaultStyle);
-                    this.bringToBack();
-                });
-              }
-            }
-          }")
+        htmlwidgets::onRender(map_render_mouseover)
 
     } else {
 
@@ -252,43 +258,13 @@ shinyServer(function(input, output) {
             r_v$rgn_name, r_v$value, SIMPLIFY = F),
           labelOptions = lapply(1:nrow(r_v), function(x) {
             labelOptions(direction='auto') }),
-          stroke = TRUE, fillOpacity = 0.5, smoothFactor = 0.5,
+          stroke = TRUE, opacity=0.5, weight=2, fillOpacity = 0.5, smoothFactor = 0.5,
           color = ~id2col(rgn_id)) %>%
         addLegend(
           "bottomright", pal = pal, opacity = 0.5,
           values = selected$data$value, title = selected$label) %>%
         fitBounds(lng1 = b[1], lat1 = b[2], lng2 = b[3], lat2 = b[4]) %>%
-        htmlwidgets::onRender("
-          function(el, t) {
-            var defaultStyle = {
-              opacity:0.5,
-              weight: 1,
-              fillOpacity: 0.7,
-            };
-            var highlightStyle = {
-              opacity:1,
-              weight: 3,
-              fillOpacity: 1,
-            };
-
-            var myMap = this;
-            var layers = myMap._layers;
-            for(var i in layers) {
-              var layer = layers[i];
-              if(layer.label) {
-                layer.on('mouseover',
-                  function(e) {
-                    this.setStyle(highlightStyle);
-                    this.bringToFront();
-                });
-                layer.on('mouseout',
-                  function(e) {
-                    this.setStyle(defaultStyle);
-                    this.bringToBack();
-                });
-              }
-            }
-          }")
+        htmlwidgets::onRender(map_render_mouseover)
       }
 
   })
@@ -297,30 +273,37 @@ shinyServer(function(input, output) {
 
   # handle mouseover/mouseout per leaflet::examples/shiny.R style
   observeEvent(input$map1_shape_mouseover, {
-    if (!v$hi_freeze && input$map1_shape_mouseover$group == 'regions'){
+    #if (!v$hi_freeze && input$map1_shape_mouseover$group == 'regions'){
+    if (!input$map1_shape_mouseover$group == 'regions') return()
+
+    if (!v$hi_freeze){
       v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_mouseover$id)))
-      #isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseover | hi_id=', v$hi_id, br(), v$msg))
+      isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseover | hi_id=', v$hi_id, br(), v$msg))
     }
   })
   observeEvent(input$map1_shape_mouseout, {
+    #if (!v$hi_freeze && input$map1_shape_mouseover$group == 'regions'){
+    if (!input$map1_shape_mouseover$group == 'regions') return()
     if (!v$hi_freeze){
       v$hi_id = 0
-      #isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseout | hi_id=', v$hi_id, br(), v$msg))
+      isolate(v$msg <- paste(now_s(), '-- map1_shape_mouseout | hi_id=', v$hi_id, br(), v$msg))
     }
   })
 
   # click on country eez to freeze flower plot
   observeEvent(input$map1_shape_click, {
-    if (input$map1_shape_mouseover$group == 'regions'){
+
+    #if (input$map1_shape_mouseover$group == 'regions'){
+    if (!input$map1_shape_mouseover$group == 'regions') return()
       v$hi_id <- as.integer(sub('_hi', '', as.character(input$map1_shape_click$id)))
       v$hi_freeze <- T
       isolate(v$msg <- paste(now_s(), '-- map1_shape_click | hi_id=', v$hi_id, br(), v$msg))
-    }
+    #}
   })
 
-  # click on anywhere on map to unfreeze flower plot and default back to global
+  # click anywhere on map to unfreeze flower plot and default back to global
   observeEvent(input$map1_click, {
-    if (v$hi_freeze && input$map1_shape_mouseover$group == 'regions'){
+    if (v$hi_freeze){
       v$hi_freeze <- F
       v$hi_id <- 0
     }
@@ -361,14 +344,19 @@ shinyServer(function(input, output) {
   output$rgnInfo = renderText({
 
     if (v$hi_id == 0){
-      txt = strong(y$app_title)
+      txt = y$app_title
     } else {
       req(get_selected())
 
       # if hover, show region
+      txt = rgns@data %>% filter(rgn_id==v$hi_id) %>% .$rgn_name
+
+      # if frozen, make bold
+      if (v$hi_freeze) txt = strong(txt)
+
+      # add score
       txt = paste(
-        strong(
-          subset(rgns@data, rgn_id==v$hi_id, rgn_name)), ':',
+        txt, ':',
         get_selected()$data %>%
           filter(rgn_id == v$hi_id) %>%
           .$value)
@@ -428,5 +416,11 @@ shinyServer(function(input, output) {
     selection())
 
   # message ----
-  output$message <- renderUI({ HTML(v$msg) })
+  output$ui_msg <- renderUI({ 
+    fluidRow(
+      box(
+        title='Messages (debug=T)', color='yellow', collapsible = T, width = 12, collapsed=F,
+        HTML(v$msg)))
+    })
+  
 })

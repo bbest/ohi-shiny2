@@ -10,4 +10,5 @@ default_scenario: <%=default_scenario%>
 ohirepos_commit:  <%=ohirepos_commit%>
 debug:            False
 projection:       Mercator                       # Mercator or Mollweide
+map_shrink_pct:   10
 last_updated:     <%=as.character(Sys.Date())%>

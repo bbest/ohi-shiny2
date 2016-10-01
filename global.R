@@ -48,7 +48,6 @@ for (p in pkgs_df$package){
 
 #options(shiny.reactlog=TRUE)
 #options(warn = 0) # warnings: into errors (2) or print as occur (1), store and print (0) or ignore (-1)
-#browser()
 #cat(file=stderr(), input$map1_bounds)
 debug = F # toggles ui_msg output
 
